@@ -15,19 +15,7 @@
 // humidity / thermo
 #include "DHT.h"
 
-const int SetClockPin = 5;
-const int ClockUpPin = 6;
-const int ClockDownPin = 7;
-
 const int DisplayPin = 10;
-
-
-const int RunClock = 0;
-const int SetYear = 1;
-const int SetMonth = 2;
-const int SetDay = 3;
-const int SetHour = 4;
-const int SetMinute = 5;
 
 //
 uint8_t base_grid[12][12] = {
@@ -161,21 +149,6 @@ const int joyeux[2] = {66, 72};
 const int noel[2] = {78, 82};
 
 DHT dht;
-
-// variables will change:
-int SetClockState = 0;
-int ClockUpState = 0;
-int ClockDownState = 0;
-
-int SetYearTo = 0;
-int SetMonthTo = 0;
-int SetDayTo = 0;
-int SetHourTo = 0;
-int SetMinuteTo = 0;
-bool settingsInProgress = false;
-
-int clockMode = RunClock;
-
 RTC_DS1307 rtc;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(144, DisplayPin, NEO_GRB + NEO_KHZ800);
@@ -551,18 +524,10 @@ void startup_test () {
   }
   empty_display();
   strip.show();
-
-  empty_display();
-  strip.show();
-
-
+  fill_grid(10);
 }
 
 void setup () {
-  // while (!Serial); // for Leonardo/Micro/Zero
-  pinMode(SetClockPin, INPUT);
-  pinMode(ClockUpPin, INPUT);
-  pinMode(ClockDownPin, INPUT);
 
   dht.setup(A1);
 
@@ -592,159 +557,10 @@ void setup () {
   Serial.print("founds leds: ");
   Serial.println(strip.numPixels());
   startup_test();
-
 }
 
 
 void loop () {
-
-  // read the state of the pushbutton value:
-    SetClockState = digitalRead(SetClockPin);
-    if (SetClockState == HIGH) {
-      clockMode++;
-      settingsInProgress = false;
-      if (clockMode > SetMinute) {
-        clockMode = RunClock;
-        rtc.adjust(DateTime(SetYearTo, SetMonthTo, SetDayTo,
-          SetHourTo, SetMinuteTo, 0));
-        }
-    }
-
-    switch (clockMode) {
-      case RunClock:
-        // printCurrentTime();
-
-        break;
-      case SetYear:
-        if (!settingsInProgress) {
-          DateTime now = rtc.now();
-          SetYearTo = now.year();
-          settingsInProgress = true;
-        }
-
-        ClockUpState = digitalRead(ClockUpPin);
-        ClockDownState = digitalRead(ClockDownPin);
-
-        if (ClockUpState == HIGH) {
-          SetYearTo++; }
-        if (ClockDownState == HIGH) {
-          SetYearTo--; }
-        Serial.print("Year setting: ");
-        Serial.print(SetYearTo, DEC);
-        Serial.println("");
-        break;
-      case SetMonth:
-        if (!settingsInProgress) {
-          DateTime now = rtc.now();
-          SetMonthTo = now.month();
-          settingsInProgress = true;
-        }
-
-        ClockUpState = digitalRead(ClockUpPin);
-        ClockDownState = digitalRead(ClockDownPin);
-
-        if (ClockUpState == HIGH) {
-          SetMonthTo++;
-          if (SetMonthTo > 12) {
-            SetMonthTo = 1;
-          }
-        }
-
-        if (ClockDownState == HIGH) {
-          SetMonthTo--;
-          if (SetMonthTo < 1) {
-            SetMonthTo = 12;
-          }
-        }
-
-        Serial.print("Month setting: ");
-        Serial.print(SetMonthTo, DEC);
-        Serial.println("");
-        break;
-      case SetDay:
-        if (!settingsInProgress) {
-          DateTime now = rtc.now();
-          SetDayTo = now.day();
-          settingsInProgress = true;
-        }
-
-        ClockUpState = digitalRead(ClockUpPin);
-        ClockDownState = digitalRead(ClockDownPin);
-
-        if (ClockUpState == HIGH) {
-          SetDayTo++;
-          if (SetDayTo > 31) {
-            SetDayTo = 1;
-          }
-        }
-
-        if (ClockDownState == HIGH) {
-          SetDayTo--;
-          if (SetDayTo < 1 ) {
-            SetDayTo = 31;
-          }
-        }
-
-        Serial.print("Day setting: ");
-        Serial.print(SetDayTo, DEC);
-        Serial.println("");
-        break;
-      case SetHour:
-        if (!settingsInProgress) {
-          DateTime now = rtc.now();
-          SetHourTo = now.hour();
-          settingsInProgress = true;
-        }
-
-        ClockUpState = digitalRead(ClockUpPin);
-        ClockDownState = digitalRead(ClockDownPin);
-
-        if (ClockUpState == HIGH) {
-          SetHourTo++;
-          if (SetHourTo > 23) {
-            SetHourTo = 0;
-          }
-        }
-
-        if (ClockDownState == HIGH) {
-          SetHourTo--;
-          if (SetHourTo < 0) {
-            SetHourTo = 23;
-          }
-        }
-
-        Serial.print("Hour setting: ");
-        Serial.print(SetHourTo, DEC);
-        Serial.println("");
-        break;
-      case SetMinute:
-        if (!settingsInProgress) {
-          DateTime now = rtc.now();
-          SetMinuteTo = now.minute();
-          settingsInProgress = true;
-        }
-
-        ClockUpState = digitalRead(ClockUpPin);
-        ClockDownState = digitalRead(ClockDownPin);
-
-        if (ClockUpState == HIGH) {
-          SetMinuteTo++;
-          if (SetMinuteTo > 59) {
-            SetMinuteTo = 0;
-          }
-        }
-        if (ClockDownState == HIGH) {
-          SetMinuteTo--;
-          if (SetMinuteTo < 0) {
-            SetMinuteTo = 59;
-          }
-        }
-        Serial.print("Minute setting: ");
-        Serial.print(SetMinuteTo, DEC);
-        Serial.println("");
-        break;
-  }
-
     empty_display();
     display_thermo();
     delay(5000);
@@ -752,5 +568,4 @@ void loop () {
     empty_display();
     display_time();
     delay(2000);
-
 }
