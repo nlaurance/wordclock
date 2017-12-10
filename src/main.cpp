@@ -15,8 +15,6 @@
 // humidity / thermo
 #include "DHT.h"
 
-
-
 const int SetClockPin = 5;
 const int ClockUpPin = 6;
 const int ClockDownPin = 7;
@@ -162,8 +160,6 @@ const int annee[2] = {55, 60};
 const int joyeux[2] = {66, 72};
 const int noel[2] = {78, 82};
 
-
-
 DHT dht;
 
 // variables will change:
@@ -181,29 +177,8 @@ bool settingsInProgress = false;
 int clockMode = RunClock;
 
 RTC_DS1307 rtc;
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(144, DisplayPin, NEO_GRB + NEO_KHZ800);
-
-
-void printCurrentTime() {
-  // DateTime now = rtc.now();
-
-  // Serial.print(now.year(), DEC);
-  // Serial.print('/');
-  // Serial.print(now.month(), DEC);
-  // Serial.print('/');
-  // Serial.print(now.day(), DEC);
-  // Serial.print(" (");
-  // Serial.print(daysOfTheWeek[now.dayOfTheWeek()]);
-  // Serial.print(") ");
-  // Serial.print(now.hour(), DEC);
-  // Serial.print(':');
-  // Serial.print(now.minute(), DEC);
-  // Serial.print(':');
-  // Serial.print(now.second(), DEC);
-  // Serial.println();
-}
 
 int from_grid_to_leds(int line, int col) {
   if ( line % 2 == 0) {
@@ -545,7 +520,6 @@ void write_time(int hour, int minute, int second) {
 }
 
 void display_time() {
-  uint32_t color = strip.Color(0, 0, 127);
   DateTime now = rtc.now();
   int hour = now.hour();
   int minute =  now.minute();
@@ -577,85 +551,6 @@ void startup_test () {
   }
   empty_display();
   strip.show();
-
-  // int interval = 10;
-  // uint32_t color = strip.Color(0, 0, 127);
-  // for (int hour=0; hour<24; hour++) {
-  //   for (int minute=0; minute < 60; minute+=5) {
-  //     write_time(hour, minute, 0);
-  //     delay(interval);
-  //     empty_display();
-  //     strip.show();
-  //
-  //   }
-  // }
-
-  // int interval = 1000;
-  // uint32_t color = strip.Color(0, 0, 127);
-  // display_word(une, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(deux, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(trois, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(quatre, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(cinq, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(six, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(sept, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(huit, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(neuf, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(dix, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(onze, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(midi, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(minuit, color); // ok
-  // delay(interval);
-  // strip.show();
-  //
-  // display_word(heures, color); // ok
-  // display_word(heure, color); // ok
-  // display_word(le, color); // ok
-  // display_word(et, color); // ok
-  // display_word(quart, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(vingt, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(mcinq, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(mdix, color); // ok
-  // delay(interval);
-  // strip.show();
-  // display_word(demie, color); // ok
-  // delay(interval);
-  // strip.show();
-  //
-  // display_word(bonne, color); // ok
-  // display_word(annee, color); // ok
-  // display_word(joyeux, color); // ok
-  // display_word(noel, color); // ok
 
   empty_display();
   strip.show();
@@ -850,103 +745,12 @@ void loop () {
         break;
   }
 
-    // delay(1500);
-
-    // float humidity = dht.getHumidity();
-    // //float temperature = dht.getTemperature();
-    // int temperature = static_cast<int>(dht.getTemperature());
-    //
-    // Serial.print("humid \t");
-    // Serial.print(humidity, 1);
-    // Serial.print("\t C ");
-    // Serial.print(temperature, 1);
-
     empty_display();
     display_thermo();
-
-    // int temperature = static_cast<int>(dht.getTemperature());
-    // int line = 4;
-    // int col = 7;
-    // int digit;
-    // // uint32_t color = map(temperature, 16, 24, 255, 0);
-    // uint32_t color = strip.Color(0, 0, 127);
-    // do {
-    //   digit = static_cast<int>(temperature % 10);
-    //   // display_digit(base_grid, digit, digit_line, digit_col);
-    //
-    //   if (digit == 0) {
-    //     paste_sprite(base_grid, digit_zero, line, col);}
-    //   else if (digit == 1) {
-    //     paste_sprite(base_grid, digit_one, line, col);}
-    //   else if (digit == 8) {
-    //     paste_sprite(base_grid, digit_eight, line, col);}
-    //   else if (digit == 9) {
-    //     paste_sprite(base_grid, digit_nine, line, col);}
-      // switch(digit) {
-      //   case 0:
-      //     paste_sprite(base_grid, digit_zero, line, col);
-      //     break;
-      //   case 1:
-      //     paste_sprite(base_grid, digit_one, line, col);
-      //     break;
-      //   case 2:
-      //     paste_sprite(base_grid, digit_two, line, col);
-      //     break;
-      //   case 3:
-      //     paste_sprite(base_grid, digit_three, line, col);
-      //     break;
-      //   case 4:
-      //     paste_sprite(base_grid, digit_four, line, col);
-      //     break;
-      //   case 5:
-      //     paste_sprite(base_grid, digit_five, line, col);
-      //     break;
-      //   case 6:
-      //     paste_sprite(base_grid, digit_six, line, col);
-      //     break;
-      //   case 7:
-      //     paste_sprite(base_grid, digit_seven, line, col);
-      //     break;
-      //   case 8:
-      //     paste_sprite(base_grid, digit_eight, line, col);
-      //     break;
-      //   case 9:
-      //     paste_sprite(base_grid, digit_nine, line, col);
-      //     break;
-      //   };
-    //   col -= 7;
-    //   temperature /= 10;
-    //   Serial.println(digit);
-    // } while (temperature > 0);
-
-    // display_grid(base_grid, color);
     delay(5000);
 
     empty_display();
-    // DateTime now = rtc.now();
-
     display_time();
-    // display_celebrations();
     delay(2000);
 
-    // int hour = 22;
-    // int minute =  57;
-    // int second = 1;
-
-
-    // uint32_t color = strip.Color(255, 0, 0);
-
-
-
-
-  //  Serial.println();
-
-//    for (int i=0; i<10; i++) {
-//      display_digit(base_grid, i, 4, 2);
-//      display_grid(base_grid, strip.Color(0, 0, 127));
-//      delay(2000);
-//      reset_grid(base_grid);
-//      display_grid(base_grid, strip.Color(0, 0, 127));
-//      delay(500);
-//    }
 }
