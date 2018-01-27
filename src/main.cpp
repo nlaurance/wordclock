@@ -16,7 +16,7 @@
 #include "DHT.h"
 
 const int DisplayPin = 10;
-
+const int PhotoSensorensorPin = A0;
 //
 uint8_t base_grid[12][12] = {
   {0,0,0,0,0,0,0,0,0,0,0,0},
@@ -150,6 +150,8 @@ const int noel[2] = {78, 82};
 
 DHT dht;
 RTC_DS1307 rtc;
+int luminosity=0;
+int brightness=64;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(144, DisplayPin, NEO_GRB + NEO_KHZ800);
 
@@ -313,7 +315,6 @@ void display_thermo() {
   // int temperature = 19;
   int line = 3;
   int col = 6;
-  strip.setBrightness(255);
   // temperature = 24;
   uint32_t color = Wheel(map(temperature, 16, 24, 128, 0));
   // uint32_t color = strip.Color(0, 0, 127);
@@ -322,13 +323,12 @@ void display_thermo() {
     display_digit(base_grid, digit, line, col);
     col -= 6;
     temperature /= 10;
-    Serial.println(digit);
   } while (temperature > 0);
   display_grid(base_grid, color);
 }
 
 void write_time(int hour, int minute, int second) {
-  uint32_t color = strip.Color(0, 0, 127);
+  uint32_t color = strip.Color(132, 38, 105);
   int seconds_past_hour = minute * 60 + second;
   bool shift_hour = false;
 
@@ -418,7 +418,6 @@ void write_time(int hour, int minute, int second) {
     case 7:
       display_word(sept, color);
       display_word(heures, color);
-      strip.setBrightness(150);
       break;
     case 8:
       display_word(huit, color);
@@ -427,7 +426,6 @@ void write_time(int hour, int minute, int second) {
     case 9:
       display_word(neuf, color);
       display_word(heures, color);
-      strip.setBrightness(240);
       break;
     case 10:
       display_word(dix, color);
@@ -463,7 +461,6 @@ void write_time(int hour, int minute, int second) {
     case 18:
       display_word(six, color);
       display_word(heures, color);
-      strip.setBrightness(230);
       break;
     case 19:
       display_word(sept, color);
@@ -476,7 +473,6 @@ void write_time(int hour, int minute, int second) {
     case 21:
       display_word(neuf, color);
       display_word(heures, color);
-      strip.setBrightness(150);
       break;
     case 22:
       display_word(dix, color);
@@ -485,7 +481,6 @@ void write_time(int hour, int minute, int second) {
     case 23:
       display_word(onze, color);
       display_word(heures, color);
-      strip.setBrightness(64);
       break;
   }
 
@@ -516,6 +511,24 @@ void display_celebrations() {
   strip.show();
 }
 
+//Theatre-style crawling lights with rainbow effect
+void theaterChaseRainbow(uint8_t wait) {
+  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
+    for (int q=0; q < 3; q++) {
+      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
+      }
+      strip.show();
+
+      delay(wait);
+
+      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      }
+    }
+  }
+}
+
 void startup_test () {
   for(uint16_t i=0; i<strip.numPixels(); i++) {
     strip.setPixelColor(i, strip.Color(255, 0, 0));
@@ -525,6 +538,7 @@ void startup_test () {
   empty_display();
   strip.show();
   fill_grid(10);
+  theaterChaseRainbow(10);
 }
 
 void setup () {
@@ -536,6 +550,7 @@ void setup () {
     Serial.println("Couldn't find RTC");
     while (1);
   }
+  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
   if (! rtc.isrunning()) {
     Serial.println("RTC is NOT running!");
@@ -552,7 +567,7 @@ void setup () {
   #endif
   // End of trinket special code
   strip.begin();
-  strip.setBrightness(64);
+  strip.setBrightness(brightness);
   strip.show(); // Initialize all pixels to 'off'
   Serial.print("founds leds: ");
   Serial.println(strip.numPixels());
@@ -561,11 +576,16 @@ void setup () {
 
 
 void loop () {
+
+    luminosity = analogRead(PhotoSensorensorPin);
+    brightness = map(luminosity, 0, 1024, 64, 255);
+    strip.setBrightness(brightness);
+    Serial.println(brightness);
     empty_display();
     display_thermo();
     delay(5000);
 
     empty_display();
     display_time();
-    delay(2000);
+    delay(55000);
 }
