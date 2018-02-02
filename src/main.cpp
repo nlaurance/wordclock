@@ -272,7 +272,7 @@ void display_thermo() {
 }
 
 void write_time(int hour, int minute, int second) {
-  CRGB color = CRGB::HotPink;
+  CRGB color = CHSV( 224, 255, brightness); // pink
 
   int seconds_past_hour = minute * 60 + second;
   bool shift_hour = false;
