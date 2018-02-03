@@ -152,6 +152,7 @@ DHT dht;
 RTC_DS1307 rtc;
 int luminosity=0;
 uint8_t brightness=128;
+uint8_t time_color = random(255);
 
 const int NUM_LEDS=144;
 CRGB strip[NUM_LEDS];
@@ -261,6 +262,7 @@ void display_digit(uint8_t grid[][12], int value, int line, int col) {
 }
 
 void display_thermo() {
+  empty_display();
   int temperature = static_cast<byte>(dht.getTemperature());
   // int temperature = 19;
   int line = 3;
@@ -279,7 +281,7 @@ void display_thermo() {
 
 void write_time(int hour, int minute, int second) {
 
-  CRGB color = CHSV( random(255), 255, brightness);
+  CRGB color = CHSV( time_color, 255, brightness);
 
   int seconds_past_hour = minute * 60 + second;
   bool shift_hour = false;
@@ -440,6 +442,7 @@ void write_time(int hour, int minute, int second) {
 }
 
 void display_time() {
+  empty_display();
   DateTime now = rtc.now();
   int hour = now.hour();
   int minute =  now.minute();
@@ -488,6 +491,7 @@ void switchToThermoCallback() {
 }
 
 void switchToClockCallback() {
+  time_color = random(255);
   display.setCallback(&display_time);
 }
 
