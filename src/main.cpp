@@ -264,7 +264,7 @@ void display_thermo() {
   int line = 3;
   int col = 6;
   // temperature = 24;
-  uint8_t color = map(temperature, 16, 24, 160, 0);
+  uint8_t color = map(temperature, 15, 24, 160, 0);
   // uint32_t color = strip.Color(0, 0, 127);
   do {
     int digit = temperature % 10;
@@ -276,7 +276,8 @@ void display_thermo() {
 }
 
 void write_time(int hour, int minute, int second) {
-  CRGB color = CHSV( 224, 255, brightness); // pink
+
+  CRGB color = CHSV( random(255), 255, brightness);
 
   int seconds_past_hour = minute * 60 + second;
   bool shift_hour = false;
