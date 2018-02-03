@@ -6,7 +6,6 @@
 #define _TASK_SLEEP_ON_IDLE_RUN
 #include <TaskScheduler.h>
 
-
 // Date and time functions using a DS1307 RTC connected via I2C and Wire lib
 #include <Wire.h>
 // SDA goes to pin A4
@@ -168,7 +167,6 @@ int from_grid_to_leds(int line, int col) {
   }
 }
 
-
 void empty_display() {
   for (int i=0; i < NUM_LEDS; i++) {
       strip[i] = CRGB::Black;
@@ -182,7 +180,6 @@ void reset_grid(int grid[][12]) {
     }
   }
 }
-
 
 void paste_sprite(uint8_t grid[][12], const uint8_t sprite[][5], int line, int col) {
   for (int l=0; l < 6; l++) { // num lines in sprite
