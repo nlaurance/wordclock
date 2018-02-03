@@ -153,10 +153,15 @@ RTC_DS1307 rtc;
 int luminosity=0;
 uint8_t brightness=128;
 
-
 const int NUM_LEDS=144;
 CRGB strip[NUM_LEDS];
 
+Scheduler ts;
+
+Task setBrightness(250, TASK_FOREVER, NULL, &ts, true);
+Task display(250, TASK_FOREVER, NULL, &ts, true);
+Task switchToThermo(TASK_MINUTE, TASK_FOREVER, NULL, &ts, true);
+Task switchToClock(TASK_MINUTE, TASK_FOREVER, NULL, &ts, false);
 
 int from_grid_to_leds(int line, int col) {
   if ( line % 2 == 0) {
@@ -473,6 +478,19 @@ void startup_test () {
 
 }
 
+void setBrightnessCallback() {
+  luminosity = analogRead(PhotoSensorensorPin);
+  brightness = map(luminosity, 10, 1024, 64, 255);
+}
+
+void switchToThermoCallback() {
+  display.setCallback(&display_thermo);
+}
+
+void switchToClockCallback() {
+  display.setCallback(&display_time);
+}
+
 void setup () {
 
   dht.setup(A1);
@@ -503,19 +521,24 @@ void setup () {
   FastLED.show();
 
   // startup_test();
+
+  setBrightness.setCallback(&setBrightnessCallback);
+  display.setCallback(&display_time);
+  switchToThermo.setCallback(&switchToThermoCallback);
+  switchToClock.setCallback(&switchToClockCallback);
+  switchToClock.enableDelayed(5000);
 }
 
 
 void loop () {
 
-  luminosity = analogRead(PhotoSensorensorPin);
-  brightness = map(luminosity, 10, 1024, 64, 255);
+  ts.execute();
 
-  empty_display();
-  display_thermo();
-  delay(5000);
-
-  empty_display();
-  display_time();
-  delay(55000);
+  // empty_display();
+  // display_thermo();
+  // delay(5000);
+  //
+  // empty_display();
+  // display_time();
+  // delay(55000);
 }
