@@ -163,6 +163,8 @@ Task setBrightness(250, TASK_FOREVER, NULL, &ts, true);
 Task display(250, TASK_FOREVER, NULL, &ts, true);
 Task switchToThermo(TASK_MINUTE, TASK_FOREVER, NULL, &ts, true);
 Task switchToClock(TASK_MINUTE, TASK_FOREVER, NULL, &ts, false);
+Task switchToCelebration(TASK_MINUTE, TASK_FOREVER, NULL, &ts, false);
+
 
 int from_grid_to_leds(int line, int col) {
   if ( line % 2 == 0) {
@@ -450,22 +452,22 @@ void display_time() {
   write_time(hour, minute, second);
 }
 
-// void display_celebrations() {
-//   uint32_t color = strip.Color(200, 0, 0);
-//   DateTime now = rtc.now();
-//   int month = now.month();
-//   int day =  now.day();
-//   if (day == 25 && month == 12) {
-//     display_word(joyeux, color);
-//     display_word(noel, color);
-//   }
-//   if (day == 1 && month == 1) {
-//     display_word(bonne, color);
-//     display_word(annee, color);
-//   }
-//   strip.show();
-// }
-
+void display_celebration() {
+  empty_display();
+  CRGB color = CHSV( random(255), 255, brightness);
+  DateTime now = rtc.now();
+  int month = now.month();
+  int day =  now.day();
+  if (day == 25 && month == 12) {
+    display_word(joyeux, color);
+    display_word(noel, color);
+  }
+  if (day == 1 && month == 1) {
+    display_word(bonne, color);
+    display_word(annee, color);
+  }
+  FastLED.show();
+}
 
 void startup_test () {
   fill_rainbow( &(strip[0]), NUM_LEDS, 222 /*starting hue*/);
@@ -487,6 +489,11 @@ void switchToClockCallback() {
   display.setCallback(&display_time);
 }
 
+void switchToCelebrationCallback() {
+  display.setCallback(&display_celebration);
+}
+
+
 void setup () {
 
   dht.setup(A1);
@@ -497,6 +504,8 @@ void setup () {
     while (1);
   }
   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+
+  // rtc.adjust(DateTime(2018, 12, 25, 3, 0, 0));
 
   if (! rtc.isrunning()) {
     Serial.println("RTC is NOT running!");
@@ -523,6 +532,8 @@ void setup () {
   switchToThermo.setCallback(&switchToThermoCallback);
   switchToClock.setCallback(&switchToClockCallback);
   switchToClock.enableDelayed(5000);
+  switchToCelebration.setCallback(&switchToCelebrationCallback);
+  switchToCelebration.enableDelayed(35000);
 
   startup_test();
 }
