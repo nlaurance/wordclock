@@ -1,10 +1,10 @@
 #include <Arduino.h>
 
 // led strip
-#include <Adafruit_NeoPixel.h>
-#ifdef __AVR__
-  #include <avr/power.h>
-#endif
+#include <FastLED.h>
+
+#define _TASK_SLEEP_ON_IDLE_RUN
+#include <TaskScheduler.h>
 
 // Date and time functions using a DS1307 RTC connected via I2C and Wire lib
 #include <Wire.h>
@@ -151,9 +151,18 @@ const int noel[2] = {78, 82};
 DHT dht;
 RTC_DS1307 rtc;
 int luminosity=0;
-int brightness=64;
+uint8_t brightness=128;
+uint8_t time_color = random(255);
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(144, DisplayPin, NEO_GRB + NEO_KHZ800);
+const int NUM_LEDS=144;
+CRGB strip[NUM_LEDS];
+
+Scheduler ts;
+
+Task setBrightness(250, TASK_FOREVER, NULL, &ts, true);
+Task display(250, TASK_FOREVER, NULL, &ts, true);
+Task switchToThermo(TASK_MINUTE, TASK_FOREVER, NULL, &ts, true);
+Task switchToClock(TASK_MINUTE, TASK_FOREVER, NULL, &ts, false);
 
 int from_grid_to_leds(int line, int col) {
   if ( line % 2 == 0) {
@@ -164,53 +173,16 @@ int from_grid_to_leds(int line, int col) {
   }
 }
 
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
-
 void empty_display() {
-  for (int i=0; i < NUM_LINES*NUM_COLS; i++) {
-      strip.setPixelColor(i, 0);
+  for (int i=0; i < NUM_LEDS; i++) {
+      strip[i] = CRGB::Black;
   }
-
 }
 
 void reset_grid(int grid[][12]) {
   for (int l=0; l < NUM_LINES; l++) {
     for (int c=0; c < NUM_COLS; c++) {
       grid[l][c]=0;
-    }
-  }
-}
-
-
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, c);
-    strip.show();
-    delay(wait);
-  }
-}
-
-void fill_grid(int wait) {
-  for (int l=0; l < NUM_LINES; l++) {
-    for (int c=0; c < NUM_COLS; c++) {
-      int led = from_grid_to_leds(l, c);
-      strip.setPixelColor(led, Wheel( 2*(l+c) % 255));
-      strip.show();
-      delay(wait);
     }
   }
 }
@@ -231,49 +203,28 @@ void paste_sprite(uint8_t grid[][12], const uint8_t sprite[][5], int line, int c
   }
 }
 
-void display_word(const int word[] , uint32_t color) {
+void display_word(const int word[] , CRGB color) {
   for (int i=word[0]; i < word[1]; i++) {
-    strip.setPixelColor(i, color);
+    strip[i]=color;
   }
 }
 
-void display_grid(uint8_t grid[][12], uint32_t color) {
+void display_grid(uint8_t grid[][12], uint8_t color) {
   for (int l=0; l < NUM_LINES; l++) {
     for (int c=0; c < NUM_COLS; c++) {
       int led = from_grid_to_leds(l, c);
       if (grid[l][c]==1) {
-        strip.setPixelColor(led, color); // blue
+        strip[led] = CHSV( color, 255, brightness);
       }
       else {
-        strip.setPixelColor(led, 0);
+        strip[led] = CRGB::Black;
       }
     }
   }
-  strip.show();
+  FastLED.show();
 }
 
 void display_digit(uint8_t grid[][12], int value, int line, int col) {
-  // if (value == 0) {
-  //   paste_sprite(grid, digit_zero, line, col);}
-  // else if (value == 1) {
-  //   paste_sprite(grid, digit_one, line, col);}
-  // else if (value == 2) {
-  //   paste_sprite(grid, digit_two, line, col);}
-  // else if (value == 3) {
-  //   paste_sprite(grid, digit_three, line, col);}
-  // else if (value == 4) {
-  //   paste_sprite(grid, digit_four, line, col);}
-  // else if (value == 5) {
-  //   paste_sprite(grid, digit_five, line, col);}
-  // else if (value == 6) {
-  //   paste_sprite(grid, digit_six, line, col);}
-  // else if (value == 7) {
-  //   paste_sprite(grid, digit_seven, line, col);}
-  // else if (value == 8) {
-  //   paste_sprite(grid, digit_eight, line, col);}
-  // else if (value == 9) {
-  //   paste_sprite(grid, digit_nine, line, col);}
-
 
   switch(value) {
     case 0:
@@ -311,12 +262,13 @@ void display_digit(uint8_t grid[][12], int value, int line, int col) {
 }
 
 void display_thermo() {
+  empty_display();
   int temperature = static_cast<byte>(dht.getTemperature());
   // int temperature = 19;
   int line = 3;
   int col = 6;
   // temperature = 24;
-  uint32_t color = Wheel(map(temperature, 16, 24, 128, 0));
+  uint8_t color = map(temperature, 15, 24, 160, 0);
   // uint32_t color = strip.Color(0, 0, 127);
   do {
     int digit = temperature % 10;
@@ -328,7 +280,9 @@ void display_thermo() {
 }
 
 void write_time(int hour, int minute, int second) {
-  uint32_t color = strip.Color(132, 38, 105);
+
+  CRGB color = CHSV( time_color, 255, brightness);
+
   int seconds_past_hour = minute * 60 + second;
   bool shift_hour = false;
 
@@ -484,10 +438,11 @@ void write_time(int hour, int minute, int second) {
       break;
   }
 
-  strip.show();
+  FastLED.show();
 }
 
 void display_time() {
+  empty_display();
   DateTime now = rtc.now();
   int hour = now.hour();
   int minute =  now.minute();
@@ -495,50 +450,49 @@ void display_time() {
   write_time(hour, minute, second);
 }
 
-void display_celebrations() {
-  uint32_t color = strip.Color(200, 0, 0);
-  DateTime now = rtc.now();
-  int month = now.month();
-  int day =  now.day();
-  if (day == 25 && month == 12) {
-    display_word(joyeux, color);
-    display_word(noel, color);
-  }
-  if (day == 1 && month == 1) {
-    display_word(bonne, color);
-    display_word(annee, color);
-  }
-  strip.show();
-}
+// void display_celebrations() {
+//   uint32_t color = strip.Color(200, 0, 0);
+//   DateTime now = rtc.now();
+//   int month = now.month();
+//   int day =  now.day();
+//   if (day == 25 && month == 12) {
+//     display_word(joyeux, color);
+//     display_word(noel, color);
+//   }
+//   if (day == 1 && month == 1) {
+//     display_word(bonne, color);
+//     display_word(annee, color);
+//   }
+//   strip.show();
+// }
 
-//Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait) {
-  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
-    for (int q=0; q < 3; q++) {
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
-    }
-  }
-}
 
 void startup_test () {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, strip.Color(255, 0, 0));
-    strip.show();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    strip[i] = CHSV( 224, 187, brightness);
+    FastLED.show();
     delay(5);
   }
+  fill_rainbow( &(strip[0]), NUM_LEDS, 222 /*starting hue*/);
+  FastLED.show();
+  delay(2000);
   empty_display();
-  strip.show();
-  fill_grid(10);
-  theaterChaseRainbow(10);
+  FastLED.show();
+
+}
+
+void setBrightnessCallback() {
+  luminosity = analogRead(PhotoSensorensorPin);
+  brightness = map(luminosity, 10, 1024, 64, 255);
+}
+
+void switchToThermoCallback() {
+  display.setCallback(&display_thermo);
+}
+
+void switchToClockCallback() {
+  time_color = random(255);
+  display.setCallback(&display_time);
 }
 
 void setup () {
@@ -566,26 +520,29 @@ void setup () {
     if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
   #endif
   // End of trinket special code
-  strip.begin();
-  strip.setBrightness(brightness);
-  strip.show(); // Initialize all pixels to 'off'
-  Serial.print("founds leds: ");
-  Serial.println(strip.numPixels());
-  startup_test();
+
+  FastLED.addLeds<NEOPIXEL, DisplayPin>(strip, NUM_LEDS);
+  FastLED.show();
+
+  // startup_test();
+
+  setBrightness.setCallback(&setBrightnessCallback);
+  display.setCallback(&display_time);
+  switchToThermo.setCallback(&switchToThermoCallback);
+  switchToClock.setCallback(&switchToClockCallback);
+  switchToClock.enableDelayed(5000);
 }
 
 
 void loop () {
 
-    luminosity = analogRead(PhotoSensorensorPin);
-    brightness = map(luminosity, 0, 1024, 64, 255);
-    strip.setBrightness(brightness);
-    Serial.println(brightness);
-    empty_display();
-    display_thermo();
-    delay(5000);
+  ts.execute();
 
-    empty_display();
-    display_time();
-    delay(55000);
+  // empty_display();
+  // display_thermo();
+  // delay(5000);
+  //
+  // empty_display();
+  // display_time();
+  // delay(55000);
 }
