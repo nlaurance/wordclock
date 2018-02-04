@@ -468,17 +468,9 @@ void display_time() {
 
 
 void startup_test () {
-  for(uint16_t i=0; i<NUM_LEDS; i++) {
-    strip[i] = CHSV( 224, 187, brightness);
-    FastLED.show();
-    delay(5);
-  }
   fill_rainbow( &(strip[0]), NUM_LEDS, 222 /*starting hue*/);
   FastLED.show();
   delay(2000);
-  empty_display();
-  FastLED.show();
-
 }
 
 void setBrightnessCallback() {
@@ -521,28 +513,23 @@ void setup () {
   #endif
   // End of trinket special code
 
+  // prepare led strip
   FastLED.addLeds<NEOPIXEL, DisplayPin>(strip, NUM_LEDS);
   FastLED.show();
 
-  // startup_test();
-
+  // setting tasks
   setBrightness.setCallback(&setBrightnessCallback);
   display.setCallback(&display_time);
   switchToThermo.setCallback(&switchToThermoCallback);
   switchToClock.setCallback(&switchToClockCallback);
   switchToClock.enableDelayed(5000);
+
+  startup_test();
 }
 
 
 void loop () {
-
+  // launch scheduler
   ts.execute();
 
-  // empty_display();
-  // display_thermo();
-  // delay(5000);
-  //
-  // empty_display();
-  // display_time();
-  // delay(55000);
 }
